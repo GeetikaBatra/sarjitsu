@@ -8,6 +8,8 @@ from app import app#, reset_cache
 from app.users.controller import *
 from app.users.forms import UploadForm
 from time import ctime
+import shutil
+from config import SA_DIR
 from flask import Flask, \
     jsonify, \
     render_template, \
@@ -63,7 +65,7 @@ def uploader():
         form.datafile = request.files.getlist("datafile")
         # FIXME: show invalid form reason in response
         if form.validate_on_submit() or form.data['cmd_mode']:
-            target =  os.path.join(app.cache.get('saDir').decode('utf-8'),
+            target =   os.path.join(app.cache.get('saDir').decode('utf-8'),
                                     session.sid)
             _valid_results_found, response = upload_processor.begin(target,
                                                             session.sid, form)
@@ -127,6 +129,13 @@ def template_loader(template='404'):
     except:
         abort(404)
 
+@app.after_request
+def delete_sar_files(response):
+    if request.path == "/upload/":
+        if SA_DIR is not None:
+            shutil.rmtree(SA_DIR)
+
+    return response
 
 if __name__ == '__main__':
     try:
